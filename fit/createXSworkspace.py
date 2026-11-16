@@ -1278,10 +1278,14 @@ def createXSworkspace(obsName, channel, nBins, obsBin, observableBins, addfakeH,
 
     data_obs_tree = data_obs_file.Get("ZZTree/candTree")
 
-    # --- make a temporary tree with Nj_d as a real branch (double) ---
+    # --- temporary tree with double copies of the jet multiplicities ---
+    # Nj, Nj_2p5 and Nj_4p7 are ULong_t in the data trees. RooFit cannot read ULong_t ("data type ULong_t is not
+    # supported") and leaves every event at the midpoint of the observable range (10 for 0-20), so without the copies
+    # all data of the Nj_2p5 / Nj_4p7 observables ended up in the last bin (>= 4 jets).
+    NJ_BRANCHES = ("Nj", "Nj_2p5", "Nj_4p7")
     df = ROOT.RDataFrame("ZZTree/candTree", data_obs_file)
-    df = df.Define("Nj_d", "double(Nj)")   # <-- replace Nj with your actual branch name
-    df = df.Define("Nj_zzfloating_d", "double(Nj)")
+    for nj_branch in NJ_BRANCHES:
+        df = df.Define(nj_branch + "_d", "double(" + nj_branch + ")")
 
     tmpname = f"tmp_cast_{year}_{obsName}.root"
     df.Snapshot("candTree", tmpname)
@@ -1289,15 +1293,12 @@ def createXSworkspace(obsName, channel, nBins, obsBin, observableBins, addfakeH,
     tmpfile = ROOT.TFile.Open(tmpname)
     data_obs_tree = tmpfile.Get("candTree")  # <-- use this from now on
 
-    # now tell RooFit to use Nj_d
+    # every jet-multiplicity observable (Nj, Nj_2p5, Nj_4p7, with or without zzfloating, also vs pT4l) reads the
+    # double copy of its branch
     print(obsName)
-    if obsName == "Nj" or obsName == "Nj_pT4l":                 # or your nJets condition
-        obsName_help = "Nj_d"
-        observable = ROOT.RooRealVar("Nj_d", "Nj_d", 0, 20)  # adjust range
-
-    if obsName == "Nj_zzfloating" or obsName == "Nj_pT4l_zzfloating":                 # or your nJets condition
-        obsName_help = "Nj_zzfloating_d"
-        observable = ROOT.RooRealVar("Nj_zzfloating_d", "Nj_zzfloating_d", 0, 20)  # adjust range
+    if (not obsName=="mass4l") and obsName_help in NJ_BRANCHES:
+        obsName_help = obsName_help + "_d"
+        observable = ROOT.RooRealVar(obsName_help, obsName_help, 0, 20)
 
     #chan = ROOT.RooRealVar("chan", "chan", 0, 3)
     # if (obsName == "nJets"): obsName = "njets_reco_pt30_eta4p7"
