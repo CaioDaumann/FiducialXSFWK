@@ -18,11 +18,14 @@ higgs4l_br = {
 '125.2_4e' : .0000333,
 '125.2_4mu' : .0000333,
 '125.2_2e2mu' : .0000604,
-# NOTE for the Hgg + H4l combination (to be discussed): fit/createXSworkspace.py reads the 13.6 TeV cross
-# sections and these branching fractions at mH = 125.38 GeV, while the combination fits run at mH = 125.07 GeV.
-# BR(H->4l), 4e + 4mu + 2e2mu: 1.283e-4 at 125.38 GeV, and 1.248e-4 at 125.07 GeV (linear interpolation
-# between the 125.0 and 125.09 entries above), which is 2.7% lower. Hgg evaluates BR(H->gamma gamma) at the
-# fit mass, where it is flat (2.270e-3 from 125.0 to 125.4 GeV).
+# NOTE for the Hgg + H4l combination (to be discussed): the combination fits run at mH = 125.07 GeV, while the
+# SM reference used so far is read at mH = 125.38 GeV. BR(H->4l), 4e + 4mu + 2e2mu: 1.283e-4 at 125.38 GeV and
+# 1.248e-4 at 125.07 GeV, which is 2.7% lower. Hgg evaluates BR(H->gamma gamma) at the fit mass, where it is flat
+# (2.270e-3 from 125.0 to 125.4 GeV). The reference is chosen with sm_reference_136TeV below.
+# 125.07: linear interpolation between the 125.0 and 125.09 entries above (weight 7/9 on 125.09)
+'125.07_4e' : .0000327422,
+'125.07_4mu' : .0000327422,
+'125.07_2e2mu' : .0000593589,
 # Extrapolated from YR values with pol2 fit
 '125.38_4e' : .00003364,
 '125.38_4mu' : .00003364,
@@ -74,6 +77,25 @@ higgs_xs_136TeV = {
 'ZH_125.38' : 936.1,
 'ttH_125.38' : 563.8,
 }
+
+# LHCHWG Report 5 (R5 v1.1.3, https://gitlab.cern.ch/LHCHIGGSXS/LHCHXSWG1/crosssections), 13.6 TeV, in fb.
+# Linear interpolation between the R5 points at 125.0 and 125.09 GeV (weight 7/9 on 125.09), six significant digits.
+higgs_xs_136TeV_R5 = {
+'ggH_125.07' : 51673.3, # N3LO
+'VBF_125.07' : 4109.77,
+'WH_125.07' : 1465.10,
+'ZH_125.07' : 947.206,
+'ttH_125.07' : 592.189,
+}
+
+# SM reference of the 13.6 TeV signal model in fit/createXSworkspace.py: the cross-section table and the mass point.
+# The branching fractions are read from higgs4l_br at the same mass (YR4 values).
+sm_reference_136TeV = {
+'YR4_125.38' : {'xs': higgs_xs_136TeV, 'mass': '125.38'}, # as used so far
+'R5_125.07' : {'xs': higgs_xs_136TeV_R5, 'mass': '125.07'},
+}
+# Reference used unless the environment variable H4L_SM_REFERENCE names another entry of sm_reference_136TeV
+sm_reference_136TeV_default = 'YR4_125.38'
 
 # TODO: Update to Run3 values
 unc_qcd = {
