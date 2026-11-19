@@ -18,6 +18,11 @@ higgs4l_br = {
 '125.2_4e' : .0000333,
 '125.2_4mu' : .0000333,
 '125.2_2e2mu' : .0000604,
+# NOTE for the Hgg + H4l combination (to be discussed): fit/createXSworkspace.py reads the 13.6 TeV cross
+# sections and these branching fractions at mH = 125.38 GeV, while the combination fits run at mH = 125.07 GeV.
+# BR(H->4l), 4e + 4mu + 2e2mu: 1.283e-4 at 125.38 GeV, and 1.248e-4 at 125.07 GeV (linear interpolation
+# between the 125.0 and 125.09 entries above), which is 2.7% lower. Hgg evaluates BR(H->gamma gamma) at the
+# fit mass, where it is flat (2.270e-3 from 125.0 to 125.4 GeV).
 # Extrapolated from YR values with pol2 fit
 '125.38_4e' : .00003364,
 '125.38_4mu' : .00003364,
