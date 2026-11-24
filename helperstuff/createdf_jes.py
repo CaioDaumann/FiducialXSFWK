@@ -241,6 +241,40 @@ def generators(year, signals=None):
 
     return gen_sig, gen_bkg
 
+# Set by coefficients/JES/RunJES.py --repairJetCounts (off by default)
+REPAIR_JET_COUNTS = False
+# Jet-multiplicity observables: nominal jet list and prefix of the JES-shifted jet lists in the skim
+NJ_IDX = {'Nj': ('jet_idx', 'jet_'), 'Nj_2p5': ('jet_idx_2p5', 'jet_2p5_'), 'Nj_4p7': ('jet_idx_4p7', 'jet_4p7_')}
+
+def _isin(a, b):
+    pairs = ak.cartesian([a, b], nested=True)
+    return ak.any(pairs['0'] == pairs['1'], axis=2)
+
+def repairJetCounts(tree, arrays, var, jesNames, year):
+    '''
+    In skims made before the config/Run3Skimmer.py add_jes fix, the JES-shifted jets are built on the pT before JER smearing
+    (bug in NATModules jetCorr.py), so jets near the pT thresholds are lost (or gained) in BOTH the up and the down variation.
+    Put those jets back to their nominal status in the shifted jet counts <var>_<jes>_Scale{Up,Dn}: + (jets in the nominal list
+    but in neither shifted list) - (jets in both shifted lists but not in the nominal one). Only with RunJES.py --repairJetCounts;
+    skipped on skims made with the fixed skimmer (recognised by their Jet_<jes>_JEC_pt branches).
+    '''
+    if 'Jet_'+jesNameForYear(jesNames[0], year)+'_JEC_pt' in tree.keys():
+        print('repairJetCounts %s %s: skim made with the fixed Run3Skimmer.py (Jet_<jes>_JEC_pt present), nothing to repair' % (year, var))
+        return
+    nom_idx, prefix = NJ_IDX[var]
+    nom = tree[nom_idx].array(library='ak')
+    for name in jesNames:
+        name_to_use = jesNameForYear(name, year)
+        up = tree[prefix+name_to_use+'_ScaleUp_idx'].array(library='ak')
+        dn = tree[prefix+name_to_use+'_ScaleDn_idx'].array(library='ak')
+        lost = ak.sum(~_isin(nom, up) & ~_isin(nom, dn), axis=1)
+        gained = ak.sum(~_isin(up, nom) & _isin(up, dn), axis=1)
+        corr = ak.to_numpy(lost - gained)
+        for d in ('Up', 'Dn'):
+            col = var+'_'+name_to_use+'_Scale'+d
+            arrays[col] = (arrays[col] + corr).astype(arrays[col].dtype)
+        print('repairJetCounts %s %s %s: %.4f of the events changed' % (year, var, name_to_use, np.mean(corr != 0)))
+
 def createDataframe(jesNames, year, dataFrame,isBkg,gen,xsec,signal,lumi,obs_reco,obs_reco_2nd='None', include_pileup=False):
 
     b_sig = ['overallEventWeight', 'Z1Flav', 'Z2Flav', 'ZZMass' ]
@@ -298,6 +332,9 @@ def createDataframe(jesNames, year, dataFrame,isBkg,gen,xsec,signal,lumi,obs_rec
     # 2024 skims contain many large branches that JES/pileup never use and this
     # was the dominant source of the >60 GB peak memory usage.
     df_np = dataFrame.arrays(b_sig, library="np")
+    for var in (obs_reco, obs_reco_2nd):
+        if REPAIR_JET_COUNTS and var in NJ_IDX:
+            repairJetCounts(dataFrame, df_np, var, jesNames, year_original)
     df = pd.DataFrame({var: df_np[var] for var in b_sig})
 
     df["FinState_reco"] = [add_fin_state_reco(i, j) for i, j in zip(df.Z1Flav, df.Z2Flav)]

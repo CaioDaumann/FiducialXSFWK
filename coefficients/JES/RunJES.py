@@ -49,6 +49,7 @@ def parseOptions():
     parser.add_option('',   '--AC', action='store_true', dest='AC', default=False, help='AC samples')
     parser.add_option('',   '--m4lLower',  dest='LOWER_BOUND',  type='int',default=105.0,   help='Lower bound for m4l')
     parser.add_option('',   '--m4lUpper',  dest='UPPER_BOUND',  type='int',default=160.0,   help='Upper bound for m4l')
+    parser.add_option('',   '--repairJetCounts', action='store_true', dest='REPAIR_JET_COUNTS', default=False, help='Nj, Nj_2p5, Nj_4p7: put back the jets that the JES-shifted collections of skims made before the Run3Skimmer.py add_jes fix lose (or gain) in both directions (helperstuff/createdf_jes.py repairJetCounts)')
     # store options and arguments as global variables
     global opt, args
     (opt, args) = parser.parse_args()
@@ -61,6 +62,8 @@ def parseOptions():
 # parse the arguments and options
 global opt, args, runAllSteps
 parseOptions()
+import createdf_jes
+createdf_jes.REPAIR_JET_COUNTS = opt.REPAIR_JET_COUNTS
 
 
 def computeRatio(nominal, upVar, dnVar):
