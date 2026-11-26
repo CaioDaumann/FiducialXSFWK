@@ -207,6 +207,13 @@ def pileupNP(pileupnp, pileup_evts_noWeight):
         return pileupnp + '/' + pileupnp + ' '
     return pileupnp + ' '
 
+def jesNP(jesnp, jes_evts_noWeight):
+    '''
+    JES lnN entry from coefficients/JES/RunJES.py, written as computed ("down/up"), like pileupNP(). fixJes() writes a
+    single value > 1 whenever down > up (e.g. the 0-jet bin, where JES up lowers the yield), which reverses the JES effect.
+    '''
+    return pileupNP(jesnp, jes_evts_noWeight)
+
 def pileupObservableKey(obsName):
     """Return the reco-branch portion used in RunPileup dictionary keys."""
     obsName_base = obsName.replace('_zzfloating', '')
@@ -953,11 +960,11 @@ def createDatacard(obsName, channel, nBins, obsBin, observableBins, physicalMode
         for index,jesName in enumerate(jesNames_datacard):
             file.write('CMS_scale_j_'+jesName+' lnN ')
             for i in range(nSignalColumns+2): # Signals + out + fake
-                file.write(str(fixJes(jesnp['signal_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
+                file.write(str(jesNP(jesnp['signal_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
                                       jes_evts_noWeight['signal_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)])))
-            file.write(str(fixJes(jesnp['qqzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
+            file.write(str(jesNP(jesnp['qqzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
                                 jes_evts_noWeight['qqzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)])))
-            file.write(str(fixJes(jesnp['ggzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
+            file.write(str(jesNP(jesnp['ggzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)],
                                 jes_evts_noWeight['ggzz_'+jesNames_datacard[index]+'_'+channel+'_'+year_for_jes_keys+'_'+obsName_jes+'_recobin'+str(obsBin)])))
             #file.write(str(fixJes(jesnp['ZX_'+jesNames[index]+'_'+channel+'_'+year+'_'+obsName.replace('pT4l', 'ZZPt')+'_recobin'+str(obsBin)],
             #                      jes_evts_noWeight['ZX_'+jesNames[index]+'_'+channel+'_'+year+'_'+obsName.replace('pT4l', 'ZZPt')+'_recobin'+str(obsBin)]))+'\n')

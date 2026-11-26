@@ -388,6 +388,15 @@ def makeZLCR(df, year):
 
 def add_jes(df, jes, year):
 
+    # The input Jet_<jes>_Scale{Up,Dn}_{pt,mass} are pT_JEC * (1 +- u), without the JER smearing factor contained in the nominal
+    # Jet_pt / Jet_mass (= pT_JEC * JER factor): bug in NATModules jetCorr.py, fixed in cms-cat/nanoAOD-tools-modules 8245239.
+    # Since (up + dn) / 2 = pT_JEC, the variations around the nominal jet are Jet_pt * up / ((up + dn) / 2), as in the fixed jetCorr.py.
+    for v in ("pt", "mass"):
+        up, dn, jec = f"Jet_{jes}_ScaleUp_{v}", f"Jet_{jes}_ScaleDn_{v}", f"Jet_{jes}_JEC_{v}"
+        df = (df.Define(jec, f"0.5f * ({up} + {dn})")
+                .Redefine(up, f"ROOT::VecOps::Where({jec} > 0.f, Jet_{v} * {up} / {jec}, {up})")
+                .Redefine(dn, f"ROOT::VecOps::Where({jec} > 0.f, Jet_{v} * {dn} / {jec}, {dn})"))
+
     up_idx = f"jet_{jes}_ScaleUp_idx"
     dn_idx = f"jet_{jes}_ScaleDn_idx"
     up_idx_2p5 = f"jet_2p5_{jes}_ScaleUp_idx"
